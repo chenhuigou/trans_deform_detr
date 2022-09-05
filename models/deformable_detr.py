@@ -24,7 +24,8 @@ from .backbone import build_backbone
 from .matcher import build_matcher
 from .segmentation import (DETRsegm, PostProcessPanoptic, PostProcessSegm,
                            dice_loss, sigmoid_focal_loss)
-from .deformable_transformer import build_deforamble_transformer
+#from .deformable_transformer import build_deforamble_transformer
+from .deformable_transformer_memory import build_deforamble_transformer
 import copy
 
 
@@ -132,12 +133,17 @@ class DeformableDETR(nn.Module):
 
         srcs = []
         masks = []
+        
         for l, feat in enumerate(features):
             src, mask = feat.decompose()
+            #print("l",l)
+            #print("src.shape",src[0].shape)
             srcs.append(self.input_proj[l](src))
             masks.append(mask)
+            #print("mask",mask.shape)
             assert mask is not None
         if self.num_feature_levels > len(srcs):
+            #print("????")
             _len_srcs = len(srcs)
             for l in range(_len_srcs, self.num_feature_levels):
                 if l == _len_srcs:
@@ -154,7 +160,8 @@ class DeformableDETR(nn.Module):
         query_embeds = None
         if not self.two_stage:
             query_embeds = self.query_embed.weight
-        hs, init_reference, inter_references, enc_outputs_class, enc_outputs_coord_unact = self.transformer(srcs, masks, pos, query_embeds)
+        #hs, init_reference, inter_references, enc_outputs_class, enc_outputs_coord_unact = self.transformer(srcs, masks, pos, query_embeds)
+        hs, init_reference, inter_references, enc_outputs_class, enc_outputs_coord_unact,sampling_grid_l_list_list,factor_list_list= self.transformer(srcs, masks, pos, query_embeds)
 
         outputs_classes = []
         outputs_coords = []
@@ -176,15 +183,19 @@ class DeformableDETR(nn.Module):
             outputs_coords.append(outputs_coord)
         outputs_class = torch.stack(outputs_classes)
         outputs_coord = torch.stack(outputs_coords)
-
-        out = {'pred_logits': outputs_class[-1], 'pred_boxes': outputs_coord[-1]}
+        
+        #print("outputs_class.shape",outputs_class[-1].shape)
+        #print("pred_boxes.shape",outputs_coord[-1].shape)
+        #out = {'pred_logits': outputs_class[-1], 'pred_boxes': outputs_coord[-1]}
+        out = {'pred_logits': outputs_class[-1], 'pred_boxes': outputs_coord[-1]} #'sampling_grid_l_list_list':sampling_grid_l_list_list, 'factor_list_list':factor_list_list } # only deal wtih last layer logits
         if self.aux_loss:
             out['aux_outputs'] = self._set_aux_loss(outputs_class, outputs_coord)
 
         if self.two_stage:
             enc_outputs_coord = enc_outputs_coord_unact.sigmoid()
             out['enc_outputs'] = {'pred_logits': enc_outputs_class, 'pred_boxes': enc_outputs_coord}
-        return out
+        #return out,[],[]
+        return out,sampling_grid_l_list_list,factor_list_list
 
     @torch.jit.unused
     def _set_aux_loss(self, outputs_class, outputs_coord):
@@ -216,6 +227,12 @@ class SetCriterion(nn.Module):
         self.weight_dict = weight_dict
         self.losses = losses
         self.focal_alpha = focal_alpha
+    
+    #def loss_transformation_invariant(self,samping_list,rotated_list,original_size):
+    #    print("samping_list.shape",samping_list.shape)
+    #   print("rotated_list.shape",rotated_list.shape)
+    #    print("original_size",original_size)
+
 
     def loss_labels(self, outputs, targets, indices, num_boxes, log=True):
         """Classification loss (NLL)
@@ -306,6 +323,84 @@ class SetCriterion(nn.Module):
             "loss_dice": dice_loss(src_masks, target_masks, num_boxes),
         }
         return losses
+    
+    def transform_invarint_single_layer(self,sampling_grid_l_list_list,factor_list_list,sampling_grid_l_list_list_rotated,factor_list_list_rotated,original_sizes,rotation_matrix):
+        orgin_s,orgin_factor=sampling_grid_l_list_list,factor_list_list
+        rot_s,rot_factor=sampling_grid_l_list_list_rotated,factor_list_list_rotated
+        #origin_sizes=original_sizes
+        num_levels,B_head,num_querys,num_points,i_shape=orgin_s.shape
+        #[4, 16, 300, 4, 2])
+        
+        #rotation_m.shape torch.Size([2, 3])
+        #defactored_orgin_s.shape torch.Size([4, 115200, 4])
+        defactored_orgin_s=orgin_s*original_sizes[None,None,None,None,None,:]
+        defactored_rot_s=rot_s*original_sizes[None,None,None,None,None,:]
+
+        
+        defactored_orgin_s=defactored_orgin_s.reshape(-1,num_points,i_shape) #[L,N,2]
+        defactored_rot_s=defactored_rot_s.reshape(-1,num_points,i_shape)
+        L,N,_=defactored_orgin_s.shape
+        #print()
+        rotation_m=(rotation_matrix[0]).repeat((L,N,1,1))#same rotation_matrix for any image in a batch #[]
+        
+        #print(" 1defactored_orgin_s.shape",defactored_orgin_s.shape) #([115200, 4, 2])
+        #defactored_orgin_s=defactored_orgin_s.permute(2,1,0).contiguous()  #[2,N,L]
+        
+        defactored_orgin_s=torch.cat([defactored_orgin_s, torch.ones(L,N,1).to(device=defactored_orgin_s.device)], dim=-1)#[L,N,3]
+        rotated_defactored_orgin_s=(rotation_m@(defactored_orgin_s.unsqueeze(-1))).squeeze(-1)#(L,N,2,1)->(L,N,2)
+        #rotated_defactored_orgin_s=rotated_defactored_orgin_s.permute(2,1,0).contiguous() #(L,N,2)
+        
+        #print("num_points in a single layer",L)
+
+        uncertainty_map=rotated_defactored_orgin_s-defactored_rot_s
+        #print("uncertainty_map.sum",(uncertainty_map<10*torch.ones(uncertainty_map.shape).to(uncertainty_map.device)).sum())
+        #print("uncertainty_map>sum",(uncertainty_map>10*torch.ones(uncertainty_map.shape).to(uncertainty_map.device)).sum())
+
+        squared_uncertainty_map=uncertainty_map[:,:,0]**2+uncertainty_map[:,:,1]**2
+        #print("squared_uncertainty_map.shape",squared_uncertainty_map.shape)
+        squared_uncertainty_map=torch.where(squared_uncertainty_map> 9*torch.ones(squared_uncertainty_map.shape).to(squared_uncertainty_map.device),squared_uncertainty_map,torch.zeros(squared_uncertainty_map.shape).to(squared_uncertainty_map.device))
+        #print("uncertainty_map.sum",squared_uncertainty_map.sum())
+        #print("squared_uncertainty_map.shape",squared_uncertainty_map.shape)
+        #uncertainty_map=torch.where(torch.abs(uncertainty_map[:,:,0]>3),torch.abs(uncertainty_map[:,:,0]),torch.zeros(uncertainty_map.shape))
+        
+        #print("uncertainty_map.shape",uncertainty_map.shape)
+        #torch.where(uncertainty_map[])
+        _, idx = torch.topk(squared_uncertainty_map,int(L//100), dim=0)
+        
+        
+        #print("rotated_defactored_orgin_s",rotated_defactored_orgin_s.shape)
+        #print("idx.shape",idx.shape)
+        #print("idx[0,0,1]",idx[0,0,1])
+        #print("idx[0][0][1]",idx[0][0][1])
+        #print("before squared_uncertainty_map.shape",squared_uncertainty_map.shape)
+       
+        #print("idx.shape",idx.shape)#idx.shape torch.Size([57600, 4, 0])
+        normalized_rotated_defactored_orgin_s = rotated_defactored_orgin_s.view(-1)[idx.view(-1)]
+        #print("after squared_uncertainty_map.shape",normalized_rotated_defactored_orgin_s.shape)
+        sampled_defactored_rot_s = defactored_rot_s.view(-1)[idx.view(-1)]
+        #
+        
+       
+        total_num_points=defactored_rot_s.shape[0]
+        loss_transform_inv=F.smooth_l1_loss(normalized_rotated_defactored_orgin_s,sampled_defactored_rot_s)
+        return loss_transform_inv/sampled_defactored_rot_s.shape[0]
+    def transform_invarint(self,sampling_grid_l_list_list,factor_list_list,sampling_grid_l_list_list_rotated,factor_list_list_rotated,original_sizes,rotation_matrix):
+        orgin_s,orgin_factor=sampling_grid_l_list_list,factor_list_list
+        rot_s,rot_factor=sampling_grid_l_list_list_rotated,factor_list_list_rotated
+        #origin_sizes=original_sizes
+        num_layers,num_levels,B_head,num_querys,num_points,i_shape=orgin_s.shape
+        #[6, 4, 16, 300, 4, 2])
+        loss_transform_inv=0.0
+        for l in range(orgin_s.shape[0]):
+            loss_transform_inv+=self.transform_invarint_single_layer(sampling_grid_l_list_list[l],factor_list_list[l],sampling_grid_l_list_list_rotated[l],factor_list_list_rotated[l],original_sizes,rotation_matrix)
+        
+        
+        
+        losses = {'transform_invarint': loss_transform_inv}
+        
+        return losses
+
+
 
     def _get_src_permutation_idx(self, indices):
         # permute predictions following indices
@@ -320,22 +415,53 @@ class SetCriterion(nn.Module):
         return batch_idx, tgt_idx
 
     def get_loss(self, loss, outputs, targets, indices, num_boxes, **kwargs):
+        """
         loss_map = {
             'labels': self.loss_labels,
             'cardinality': self.loss_cardinality,
             'boxes': self.loss_boxes,
             'masks': self.loss_masks
         }
+        """
+        loss_map = {
+            'labels': self.loss_labels,
+            'cardinality': self.loss_cardinality,
+            'boxes': self.loss_boxes,
+            'masks': self.loss_masks}
+            #'transform_invarint':self.transform_invarint}
+        #print("loss",loss)
         assert loss in loss_map, f'do you really want to compute {loss} loss?'
         return loss_map[loss](outputs, targets, indices, num_boxes, **kwargs)
 
-    def forward(self, outputs, targets):
+
+    def get_loss_transInvariant(self,loss,sampling_grid_l_list_list,factor_list_list,sampling_grid_l_list_list_rotated,factor_list_list_rotated,original_sizes,rotation_matrix):
+        """
+        loss_map = {
+            'labels': self.loss_labels,
+            'cardinality': self.loss_cardinality,
+            'boxes': self.loss_boxes,
+            'masks': self.loss_masks
+        }
+        """
+        
+        loss_map = {'transform_invarint':self.transform_invarint}
+        assert loss in loss_map, f'do you really want to compute {loss} loss?'
+        return loss_map[loss](sampling_grid_l_list_list,factor_list_list,sampling_grid_l_list_list_rotated,factor_list_list_rotated,original_sizes,rotation_matrix)
+
+    #def forward(self, outputs, targets,):
+    def forward(self, outputs=None, targets=None,sampling_grid_l_list_list=None,factor_list_list=None,sampling_grid_l_list_list_rotated=None,factor_list_list_rotated=None,original_sizes=None,rotation_matrix=None):
+
         """ This performs the loss computation.
         Parameters:
              outputs: dict of tensors, see the output specification of the model for the format
              targets: list of dicts, such that len(targets) == batch_size.
                       The expected keys in each dict depends on the losses applied, see each loss' doc
         """
+        #print("sampling_grid_l_list_list.shape",sampling_grid_l_list_list.shape)
+        #print("factor_list_list.shape",factor_list_list.shape)
+        #print("sampling_grid_l_list_list_rotated.shape",sampling_grid_l_list_list_rotated.shape)
+        #print("factor_list_list_rotated.shape",factor_list_list_rotated.shape)
+        #print("original_sizes.shape",original_sizes.shape)
         outputs_without_aux = {k: v for k, v in outputs.items() if k != 'aux_outputs' and k != 'enc_outputs'}
 
         # Retrieve the matching between the outputs of the last layer and the targets
@@ -350,10 +476,19 @@ class SetCriterion(nn.Module):
 
         # Compute all the requested losses
         losses = {}
+        #print("self.losses:",self.losses)
+        #if self.training!=True:
+            #print("self.losses",self.losses)
+            #self.losses.pop('transform_invarint')
         for loss in self.losses:
             kwargs = {}
-            losses.update(self.get_loss(loss, outputs, targets, indices, num_boxes, **kwargs))
-
+            if loss=='transform_invarint' and self.training==True:
+                losses.update(self.get_loss_transInvariant(loss,sampling_grid_l_list_list,factor_list_list,sampling_grid_l_list_list_rotated,factor_list_list_rotated,original_sizes,rotation_matrix))
+            elif loss!='transform_invarint':
+                losses.update(self.get_loss(loss, outputs, targets, indices, num_boxes, **kwargs))
+            else: 
+                continue
+        #print("self.losses:",self.losses)
         # In case of auxiliary losses, we repeat this process with the output of each intermediate layer.
         if 'aux_outputs' in outputs:
             for i, aux_outputs in enumerate(outputs['aux_outputs']):
@@ -366,9 +501,10 @@ class SetCriterion(nn.Module):
                     if loss == 'labels':
                         # Logging is enabled only for the last layer
                         kwargs['log'] = False
-                    l_dict = self.get_loss(loss, aux_outputs, targets, indices, num_boxes, **kwargs)
-                    l_dict = {k + f'_{i}': v for k, v in l_dict.items()}
-                    losses.update(l_dict)
+                    if loss!='transform_invarint':
+                        l_dict = self.get_loss(loss, aux_outputs, targets, indices, num_boxes, **kwargs)
+                        l_dict = {k + f'_{i}': v for k, v in l_dict.items()}
+                        losses.update(l_dict)
 
         if 'enc_outputs' in outputs:
             enc_outputs = outputs['enc_outputs']
@@ -384,10 +520,13 @@ class SetCriterion(nn.Module):
                 if loss == 'labels':
                     # Logging is enabled only for the last layer
                     kwargs['log'] = False
-                l_dict = self.get_loss(loss, enc_outputs, bin_targets, indices, num_boxes, **kwargs)
-                l_dict = {k + f'_enc': v for k, v in l_dict.items()}
-                losses.update(l_dict)
-
+                if loss!='transform_invarint':
+                    l_dict = self.get_loss(loss, enc_outputs, bin_targets, indices, num_boxes, **kwargs)
+                    l_dict = {k + f'_enc': v for k, v in l_dict.items()}
+                    losses.update(l_dict)
+        #print("losses",losses.keys())
+        if 'transform_invarint' in losses and self.training!=True:
+            losses.pop('transform_invarint')
         return losses
 
 
@@ -450,6 +589,7 @@ def build(args):
     backbone = build_backbone(args)
 
     transformer = build_deforamble_transformer(args)
+    print("args",args)
     model = DeformableDETR(
         backbone,
         transformer,
@@ -465,6 +605,8 @@ def build(args):
     matcher = build_matcher(args)
     weight_dict = {'loss_ce': args.cls_loss_coef, 'loss_bbox': args.bbox_loss_coef}
     weight_dict['loss_giou'] = args.giou_loss_coef
+    
+    weight_dict['transform_invarint'] = args.transform_invarint_loss_coef
     if args.masks:
         weight_dict["loss_mask"] = args.mask_loss_coef
         weight_dict["loss_dice"] = args.dice_loss_coef
@@ -472,13 +614,15 @@ def build(args):
     if args.aux_loss:
         aux_weight_dict = {}
         for i in range(args.dec_layers - 1):
-            aux_weight_dict.update({k + f'_{i}': v for k, v in weight_dict.items()})
-        aux_weight_dict.update({k + f'_enc': v for k, v in weight_dict.items()})
+            aux_weight_dict.update({k + f'_{i}': v for k, v in weight_dict.items() if k!='transform_invarint'})
+        aux_weight_dict.update({k + f'_enc': v for k, v in weight_dict.items() if k!='transform_invarint'})
         weight_dict.update(aux_weight_dict)
 
-    losses = ['labels', 'boxes', 'cardinality']
+    losses = ['labels', 'boxes', 'cardinality','transform_invarint']
     if args.masks:
         losses += ["masks"]
+    #if args.transform_invariant:
+    #    losses += ["transform_invariant"]
     # num_classes, matcher, weight_dict, losses, focal_alpha=0.25
     criterion = SetCriterion(num_classes, matcher, weight_dict, losses, focal_alpha=args.focal_alpha)
     criterion.to(device)

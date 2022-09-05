@@ -345,11 +345,13 @@ class NestedTensor(object):
         # type: (Device) -> NestedTensor # noqa
         cast_tensor = self.tensors.to(device, non_blocking=non_blocking)
         mask = self.mask
+        #print("before",mask)
         if mask is not None:
             assert mask is not None
             cast_mask = mask.to(device, non_blocking=non_blocking)
         else:
             cast_mask = None
+        #print("after",cast_mask)
         return NestedTensor(cast_tensor, cast_mask)
 
     def record_stream(self, *args, **kwargs):
@@ -424,6 +426,7 @@ def init_distributed_mode(args):
     if 'RANK' in os.environ and 'WORLD_SIZE' in os.environ:
         args.rank = int(os.environ["RANK"])
         args.world_size = int(os.environ['WORLD_SIZE'])
+        print("args.world_size ",args.world_size )
         args.gpu = int(os.environ['LOCAL_RANK'])
         args.dist_url = 'env://'
         os.environ['LOCAL_SIZE'] = str(torch.cuda.device_count())
@@ -440,6 +443,7 @@ def init_distributed_mode(args):
         os.environ['RANK'] = str(proc_id)
         os.environ['LOCAL_RANK'] = str(proc_id % num_gpus)
         os.environ['LOCAL_SIZE'] = str(num_gpus)
+        print("os.environ['WORLD_SIZE']",os.environ['WORLD_SIZE'])
         args.dist_url = 'env://'
         args.world_size = ntasks
         args.rank = proc_id
@@ -452,14 +456,20 @@ def init_distributed_mode(args):
     args.distributed = True
 
     torch.cuda.set_device(args.gpu)
-    args.dist_backend = 'nccl'
+    #args.dist_backend = 'nccl'
+    args.dist_backend = 'gloo'
     print('| distributed init (rank {}): {}'.format(
         args.rank, args.dist_url), flush=True)
-    torch.distributed.init_process_group(backend=args.dist_backend, init_method=args.dist_url,
+    print("AAAA")
+    
+    torch.distributed.init_process_group(backend=args.dist_backend, init_method="tcp://129.21.171.183:39533",#args.dist_url,
                                          world_size=args.world_size, rank=args.rank)
+    
+    print("BBBB")
     torch.distributed.barrier()
+    
     setup_for_distributed(args.rank == 0)
-
+    #import sys; sys.exit() 
 
 @torch.no_grad()
 def accuracy(output, target, topk=(1,)):

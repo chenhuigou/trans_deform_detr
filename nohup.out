@@ -1,0 +1,325 @@
++ GPUS=8
++ RUN_COMMAND=./configs/r50_deformable_detr.sh
++ '[' 8 -lt 8 ']'
++ GPUS_PER_NODE=8
++ MASTER_ADDR=127.0.0.1
++ MASTER_PORT=29500
++ NODE_RANK=0
++ let NNODES=GPUS/GPUS_PER_NODE
++ python ./tools/launch.py --nnodes 1 --node_rank 0 --master_addr 127.0.0.1 --master_port 29500 --nproc_per_node 8 ./configs/r50_deformable_detr.sh
++ EXP_DIR=exps/r50_deformable_detr
++ PY_ARGS=
++ python -u main.py --output_dir exps/r50_deformable_detr
++ EXP_DIR=exps/r50_deformable_detr
++ PY_ARGS=
++ python -u main.py --output_dir exps/r50_deformable_detr
++ EXP_DIR=exps/r50_deformable_detr
++ PY_ARGS=
++ python -u main.py --output_dir exps/r50_deformable_detr
++ EXP_DIR=exps/r50_deformable_detr
++ PY_ARGS=
++ python -u main.py --output_dir exps/r50_deformable_detr
++ EXP_DIR=exps/r50_deformable_detr
++ PY_ARGS=
++ python -u main.py --output_dir exps/r50_deformable_detr
++ EXP_DIR=exps/r50_deformable_detr
++ PY_ARGS=
++ python -u main.py --output_dir exps/r50_deformable_detr
++ EXP_DIR=exps/r50_deformable_detr
++ PY_ARGS=
++ python -u main.py --output_dir exps/r50_deformable_detr
++ EXP_DIR=exps/r50_deformable_detr
++ PY_ARGS=
++ python -u main.py --output_dir exps/r50_deformable_detr
+Traceback (most recent call last):
+  File "main.py", line 328, in <module>
+    main(args)
+  File "main.py", line 132, in main
+    utils.init_distributed_mode(args)
+  File "/home/dxleec/chenhui/Deformable-DETR_multiscale_transform/util/misc.py", line 454, in init_distributed_mode
+| distributed init (rank 3): env://
+Traceback (most recent call last):
+  File "main.py", line 328, in <module>
+    main(args)
+  File "main.py", line 132, in main
+    utils.init_distributed_mode(args)
+  File "/home/dxleec/chenhui/Deformable-DETR_multiscale_transform/util/misc.py", line 454, in init_distributed_mode
+| distributed init (rank 2): env://
+    torch.cuda.set_device(args.gpu)
+  File "/home/dxleec/anaconda3/envs/c_deform/lib/python3.7/site-packages/torch/cuda/__init__.py", line 263, in set_device
+    torch._C._cuda_setDevice(device)
+RuntimeError: CUDA error: invalid device ordinal
+    torch.cuda.set_device(args.gpu)
+  File "/home/dxleec/anaconda3/envs/c_deform/lib/python3.7/site-packages/torch/cuda/__init__.py", line 263, in set_device
+    torch._C._cuda_setDevice(device)
+RuntimeError: CUDA error: invalid device ordinal
+Traceback (most recent call last):
+  File "main.py", line 328, in <module>
+    main(args)
+  File "main.py", line 132, in main
+    utils.init_distributed_mode(args)
+  File "/home/dxleec/chenhui/Deformable-DETR_multiscale_transform/util/misc.py", line 454, in init_distributed_mode
+    torch.cuda.set_device(args.gpu)
+  File "/home/dxleec/anaconda3/envs/c_deform/lib/python3.7/site-packages/torch/cuda/__init__.py", line 263, in set_device
+    torch._C._cuda_setDevice(device)
+RuntimeError: CUDA error: invalid device ordinal
+| distributed init (rank 1): env://
+Traceback (most recent call last):
+  File "main.py", line 328, in <module>
+    main(args)
+  File "main.py", line 132, in main
+    utils.init_distributed_mode(args)
+  File "/home/dxleec/chenhui/Deformable-DETR_multiscale_transform/util/misc.py", line 454, in init_distributed_mode
+    torch.cuda.set_device(args.gpu)
+  File "/home/dxleec/anaconda3/envs/c_deform/lib/python3.7/site-packages/torch/cuda/__init__.py", line 263, in set_device
+    torch._C._cuda_setDevice(device)
+RuntimeError: CUDA error: invalid device ordinal
+| distributed init (rank 0): env://
+Traceback (most recent call last):
+  File "./tools/launch.py", line 192, in <module>
+    main()
+  File "./tools/launch.py", line 185, in main
+    process.wait()
+  File "/home/dxleec/anaconda3/envs/c_deform/lib/python3.7/subprocess.py", line 1019, in wait
+    return self._wait(timeout=timeout)
+  File "/home/dxleec/anaconda3/envs/c_deform/lib/python3.7/subprocess.py", line 1653, in _wait
+    (pid, sts) = self._try_wait(0)
+  File "/home/dxleec/anaconda3/envs/c_deform/lib/python3.7/subprocess.py", line 1611, in _try_wait
+    (pid, sts) = os.waitpid(self.pid, wait_flags)
+KeyboardInterrupt
++ GPUS=8
++ RUN_COMMAND=./configs/r50_deformable_detr.sh
++ '[' 8 -lt 8 ']'
++ GPUS_PER_NODE=8
++ MASTER_ADDR=127.0.0.1
++ MASTER_PORT=29500
++ NODE_RANK=0
++ let NNODES=GPUS/GPUS_PER_NODE
++ python ./tools/launch.py --nnodes 1 --node_rank 0 --master_addr 127.0.0.1 --master_port 29500 --nproc_per_node 8 ./configs/r50_deformable_detr.sh
++ EXP_DIR=exps/r50_deformable_detr
++ PY_ARGS=
++ python -u main.py --output_dir exps/r50_deformable_detr
++ EXP_DIR=exps/r50_deformable_detr
++ PY_ARGS=
++ python -u main.py --output_dir exps/r50_deformable_detr
++ EXP_DIR=exps/r50_deformable_detr
++ PY_ARGS=
++ python -u main.py --output_dir exps/r50_deformable_detr
++ EXP_DIR=exps/r50_deformable_detr
++ PY_ARGS=
++ python -u main.py --output_dir exps/r50_deformable_detr
++ EXP_DIR=exps/r50_deformable_detr
++ PY_ARGS=
++ python -u main.py --output_dir exps/r50_deformable_detr
++ EXP_DIR=exps/r50_deformable_detr
++ PY_ARGS=
++ python -u main.py --output_dir exps/r50_deformable_detr
++ EXP_DIR=exps/r50_deformable_detr
++ PY_ARGS=
++ python -u main.py --output_dir exps/r50_deformable_detr
++ EXP_DIR=exps/r50_deformable_detr
++ PY_ARGS=
++ python -u main.py --output_dir exps/r50_deformable_detr
+Traceback (most recent call last):
+  File "main.py", line 21, in <module>
+    import datasets
+  File "/home/dxleec/chenhui/Deformable-DETR_multiscale_transform/datasets/__init__.py", line 11, in <module>
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "main.py", line 21, in <module>
+  File "main.py", line 21, in <module>
+    import datasets
+  File "/home/dxleec/chenhui/Deformable-DETR_multiscale_transform/datasets/__init__.py", line 11, in <module>
+    import datasets
+  File "/home/dxleec/chenhui/Deformable-DETR_multiscale_transform/datasets/__init__.py", line 11, in <module>
+Traceback (most recent call last):
+  File "main.py", line 21, in <module>
+Traceback (most recent call last):
+  File "main.py", line 21, in <module>
+    import datasets
+  File "/home/dxleec/chenhui/Deformable-DETR_multiscale_transform/datasets/__init__.py", line 11, in <module>
+    import datasets
+  File "/home/dxleec/chenhui/Deformable-DETR_multiscale_transform/datasets/__init__.py", line 11, in <module>
+Traceback (most recent call last):
+  File "main.py", line 21, in <module>
+    import datasets
+  File "/home/dxleec/chenhui/Deformable-DETR_multiscale_transform/datasets/__init__.py", line 11, in <module>
+Traceback (most recent call last):
+  File "main.py", line 21, in <module>
+    import datasets
+  File "/home/dxleec/chenhui/Deformable-DETR_multiscale_transform/datasets/__init__.py", line 11, in <module>
+Traceback (most recent call last):
+  File "main.py", line 21, in <module>
+    import datasets
+  File "/home/dxleec/chenhui/Deformable-DETR_multiscale_transform/datasets/__init__.py", line 11, in <module>
+    from .torchvision_datasets import CocoDetection    
+from .torchvision_datasets import CocoDetection
+  File "/home/dxleec/chenhui/Deformable-DETR_multiscale_transform/datasets/torchvision_datasets/__init__.py", line 7, in <module>
+  File "/home/dxleec/chenhui/Deformable-DETR_multiscale_transform/datasets/torchvision_datasets/__init__.py", line 7, in <module>
+    from .torchvision_datasets import CocoDetection    
+from .torchvision_datasets import CocoDetection
+  File "/home/dxleec/chenhui/Deformable-DETR_multiscale_transform/datasets/torchvision_datasets/__init__.py", line 7, in <module>
+  File "/home/dxleec/chenhui/Deformable-DETR_multiscale_transform/datasets/torchvision_datasets/__init__.py", line 7, in <module>
+    from .torchvision_datasets import CocoDetection
+  File "/home/dxleec/chenhui/Deformable-DETR_multiscale_transform/datasets/torchvision_datasets/__init__.py", line 7, in <module>
+    from .torchvision_datasets import CocoDetection
+  File "/home/dxleec/chenhui/Deformable-DETR_multiscale_transform/datasets/torchvision_datasets/__init__.py", line 7, in <module>
+        from .torchvision_datasets import CocoDetectionfrom .torchvision_datasets import CocoDetection
+
+  File "/home/dxleec/chenhui/Deformable-DETR_multiscale_transform/datasets/torchvision_datasets/__init__.py", line 7, in <module>
+  File "/home/dxleec/chenhui/Deformable-DETR_multiscale_transform/datasets/torchvision_datasets/__init__.py", line 7, in <module>
+        from .coco import CocoDetectionfrom .coco import CocoDetection
+
+  File "/home/dxleec/chenhui/Deformable-DETR_multiscale_transform/datasets/torchvision_datasets/coco.py", line 12, in <module>
+  File "/home/dxleec/chenhui/Deformable-DETR_multiscale_transform/datasets/torchvision_datasets/coco.py", line 12, in <module>
+        from .coco import CocoDetectionfrom .coco import CocoDetection
+
+  File "/home/dxleec/chenhui/Deformable-DETR_multiscale_transform/datasets/torchvision_datasets/coco.py", line 12, in <module>
+  File "/home/dxleec/chenhui/Deformable-DETR_multiscale_transform/datasets/torchvision_datasets/coco.py", line 12, in <module>
+    from .coco import CocoDetection
+  File "/home/dxleec/chenhui/Deformable-DETR_multiscale_transform/datasets/torchvision_datasets/coco.py", line 12, in <module>
+    from .coco import CocoDetection
+  File "/home/dxleec/chenhui/Deformable-DETR_multiscale_transform/datasets/torchvision_datasets/coco.py", line 12, in <module>
+    from .coco import CocoDetection    
+from .coco import CocoDetection  File "/home/dxleec/chenhui/Deformable-DETR_multiscale_transform/datasets/torchvision_datasets/coco.py", line 12, in <module>
+
+  File "/home/dxleec/chenhui/Deformable-DETR_multiscale_transform/datasets/torchvision_datasets/coco.py", line 12, in <module>
+    from torchvision.datasets.vision import VisionDataset
+  File "/home/dxleec/anaconda3/envs/c_deform/lib/python3.7/site-packages/torchvision/__init__.py", line 6, in <module>
+    from torchvision.datasets.vision import VisionDataset
+  File "/home/dxleec/anaconda3/envs/c_deform/lib/python3.7/site-packages/torchvision/__init__.py", line 6, in <module>
+    from torchvision.datasets.vision import VisionDataset
+  File "/home/dxleec/anaconda3/envs/c_deform/lib/python3.7/site-packages/torchvision/__init__.py", line 6, in <module>
+        from torchvision.datasets.vision import VisionDatasetfrom torchvision.datasets.vision import VisionDataset
+
+  File "/home/dxleec/anaconda3/envs/c_deform/lib/python3.7/site-packages/torchvision/__init__.py", line 6, in <module>
+  File "/home/dxleec/anaconda3/envs/c_deform/lib/python3.7/site-packages/torchvision/__init__.py", line 6, in <module>
+    from torchvision.datasets.vision import VisionDataset
+  File "/home/dxleec/anaconda3/envs/c_deform/lib/python3.7/site-packages/torchvision/__init__.py", line 6, in <module>
+    from torchvision.datasets.vision import VisionDataset
+  File "/home/dxleec/anaconda3/envs/c_deform/lib/python3.7/site-packages/torchvision/__init__.py", line 6, in <module>
+    from torchvision.datasets.vision import VisionDataset
+  File "/home/dxleec/anaconda3/envs/c_deform/lib/python3.7/site-packages/torchvision/__init__.py", line 6, in <module>
+    from torchvision import models
+  File "/home/dxleec/anaconda3/envs/c_deform/lib/python3.7/site-packages/torchvision/models/__init__.py", line 14, in <module>
+    from torchvision import models
+  File "/home/dxleec/anaconda3/envs/c_deform/lib/python3.7/site-packages/torchvision/models/__init__.py", line 14, in <module>
+    from torchvision import models
+  File "/home/dxleec/anaconda3/envs/c_deform/lib/python3.7/site-packages/torchvision/models/__init__.py", line 14, in <module>
+    from torchvision import models
+  File "/home/dxleec/anaconda3/envs/c_deform/lib/python3.7/site-packages/torchvision/models/__init__.py", line 14, in <module>
+    from torchvision import models
+  File "/home/dxleec/anaconda3/envs/c_deform/lib/python3.7/site-packages/torchvision/models/__init__.py", line 14, in <module>
+        from torchvision import modelsfrom torchvision import models
+
+  File "/home/dxleec/anaconda3/envs/c_deform/lib/python3.7/site-packages/torchvision/models/__init__.py", line 14, in <module>
+  File "/home/dxleec/anaconda3/envs/c_deform/lib/python3.7/site-packages/torchvision/models/__init__.py", line 14, in <module>
+    from torchvision import models
+  File "/home/dxleec/anaconda3/envs/c_deform/lib/python3.7/site-packages/torchvision/models/__init__.py", line 14, in <module>
+        from . import quantizationfrom . import quantization
+
+  File "/home/dxleec/anaconda3/envs/c_deform/lib/python3.7/site-packages/torchvision/models/quantization/__init__.py", line 3, in <module>
+  File "/home/dxleec/anaconda3/envs/c_deform/lib/python3.7/site-packages/torchvision/models/quantization/__init__.py", line 3, in <module>
+        from . import quantizationfrom . import quantization
+
+  File "/home/dxleec/anaconda3/envs/c_deform/lib/python3.7/site-packages/torchvision/models/quantization/__init__.py", line 3, in <module>
+  File "/home/dxleec/anaconda3/envs/c_deform/lib/python3.7/site-packages/torchvision/models/quantization/__init__.py", line 3, in <module>
+        from . import quantizationfrom . import quantization
+
+  File "/home/dxleec/anaconda3/envs/c_deform/lib/python3.7/site-packages/torchvision/models/quantization/__init__.py", line 3, in <module>
+  File "/home/dxleec/anaconda3/envs/c_deform/lib/python3.7/site-packages/torchvision/models/quantization/__init__.py", line 3, in <module>
+    from . import quantization
+  File "/home/dxleec/anaconda3/envs/c_deform/lib/python3.7/site-packages/torchvision/models/quantization/__init__.py", line 3, in <module>
+    from . import quantization
+  File "/home/dxleec/anaconda3/envs/c_deform/lib/python3.7/site-packages/torchvision/models/quantization/__init__.py", line 3, in <module>
+        from .googlenet import *from .googlenet import *
+
+  File "<frozen importlib._bootstrap>", line 983, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 983, in _find_and_load
+    from .googlenet import *    
+from .googlenet import *
+  File "<frozen importlib._bootstrap>", line 983, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 983, in _find_and_load
+    from .googlenet import *
+  File "<frozen importlib._bootstrap>", line 983, in _find_and_load
+    from .googlenet import *
+      File "<frozen importlib._bootstrap>", line 983, in _find_and_load
+from .googlenet import *
+  File "<frozen importlib._bootstrap>", line 983, in _find_and_load
+    from .googlenet import *
+  File "<frozen importlib._bootstrap>", line 983, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 967, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 967, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 677, in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 677, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 724, in exec_module
+  File "<frozen importlib._bootstrap_external>", line 724, in exec_module
+  File "<frozen importlib._bootstrap>", line 967, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 967, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 677, in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 677, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 724, in exec_module
+  File "<frozen importlib._bootstrap_external>", line 724, in exec_module
+  File "<frozen importlib._bootstrap>", line 967, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 967, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 677, in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 677, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 724, in exec_module
+  File "<frozen importlib._bootstrap_external>", line 724, in exec_module
+  File "<frozen importlib._bootstrap>", line 967, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 967, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 677, in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 677, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 724, in exec_module
+  File "<frozen importlib._bootstrap_external>", line 724, in exec_module
+  File "<frozen importlib._bootstrap_external>", line 818, in get_code
+  File "<frozen importlib._bootstrap_external>", line 818, in get_code
+  File "<frozen importlib._bootstrap_external>", line 917, in get_data
+  File "<frozen importlib._bootstrap_external>", line 917, in get_data
+KeyboardInterrupt
+KeyboardInterrupt
+  File "<frozen importlib._bootstrap_external>", line 818, in get_code
+  File "<frozen importlib._bootstrap_external>", line 818, in get_code
+  File "<frozen importlib._bootstrap_external>", line 917, in get_data
+  File "<frozen importlib._bootstrap_external>", line 917, in get_data
+KeyboardInterrupt
+KeyboardInterrupt
+  File "<frozen importlib._bootstrap_external>", line 818, in get_code
+  File "<frozen importlib._bootstrap_external>", line 917, in get_data
+KeyboardInterrupt
+  File "<frozen importlib._bootstrap_external>", line 818, in get_code
+  File "<frozen importlib._bootstrap_external>", line 917, in get_data
+KeyboardInterrupt
+  File "<frozen importlib._bootstrap_external>", line 818, in get_code
+  File "<frozen importlib._bootstrap_external>", line 917, in get_data
+KeyboardInterrupt
+  File "<frozen importlib._bootstrap_external>", line 818, in get_code
+  File "<frozen importlib._bootstrap_external>", line 917, in get_data
+KeyboardInterrupt
+Traceback (most recent call last):
+  File "./tools/launch.py", line 192, in <module>
+    main()
+  File "./tools/launch.py", line 185, in main
+    process.wait()
+  File "/home/dxleec/anaconda3/envs/c_deform/lib/python3.7/subprocess.py", line 1019, in wait
+    return self._wait(timeout=timeout)
+  File "/home/dxleec/anaconda3/envs/c_deform/lib/python3.7/subprocess.py", line 1653, in _wait
+    (pid, sts) = self._try_wait(0)
+  File "/home/dxleec/anaconda3/envs/c_deform/lib/python3.7/subprocess.py", line 1611, in _try_wait
+    (pid, sts) = os.waitpid(self.pid, wait_flags)
+KeyboardInterrupt
+Traceback (most recent call last):
+
+  File "main.py", line 328, in <module>
+    main(args)
+  File "main.py", line 132, in main
+    utils.init_distributed_mode(args)
+  File "/home/dxleec/chenhui/Deformable-DETR_multiscale_transform/util/misc.py", line 459, in init_distributed_mode
+
+
+    world_size=args.world_size, rank=args.rank)
+  File "/home/dxleec/anaconda3/envs/c_deform/lib/python3.7/site-packages/torch/distributed/distributed_c10d.py", line 436, in init_process_group
+    store, rank, world_size = next(rendezvous_iterator)
+  File "/home/dxleec/anaconda3/envs/c_deform/lib/python3.7/site-packages/torch/distributed/rendezvous.py", line 179, in _env_rendezvous_handler
+    store = TCPStore(master_addr, master_port, world_size, start_daemon, timeout)
+KeyboardInterrupt

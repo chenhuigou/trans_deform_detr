@@ -108,13 +108,14 @@ class Backbone(BackboneBase):
         if dilation:
             self.strides[-1] = self.strides[-1] // 2
 
-
+'''
 class Joiner(nn.Sequential):
     def __init__(self, backbone, position_embedding):
         super().__init__(backbone, position_embedding)
         self.strides = backbone.strides
         self.num_channels = backbone.num_channels
-
+        print('self[0]',self[0])
+        print('self[1]',self[1])
     def forward(self, tensor_list: NestedTensor):
         xs = self[0](tensor_list)
         out: List[NestedTensor] = []
@@ -127,8 +128,34 @@ class Joiner(nn.Sequential):
             pos.append(self[1](x).to(x.tensors.dtype))
 
         return out, pos
+'''
+
+class Joiner(nn.Sequential):
+    def __init__(self, backbone, position_embedding):
+        super().__init__(backbone, position_embedding)
+        self.strides = backbone.strides
+        self.num_channels = backbone.num_channels
+        #print('self[0]',self[0])
+        #print('self[1]',self[1])
+        #self.transform=transform
+    def forward(self, tensor_list: NestedTensor,transform=None):
+        xs = self[0](tensor_list)
+        out: List[NestedTensor] = []
+        pos = []
+        for name, x in sorted(xs.items()):
+            #print("x",x)
+            out.append(x)
+            real_x,x_mask=x.decompose()
+            #print("real_x.shape",real_x.shape)
+            #print("x_mask.shape",x_mask.shape)
+        # position encoding
+        #if self.transform not None:
 
 
+        for x in out:
+            pos.append(self[1](x).to(x.tensors.dtype))
+
+        return out, pos
 def build_backbone(args):
     position_embedding = build_position_encoding(args)
     train_backbone = args.lr_backbone > 0

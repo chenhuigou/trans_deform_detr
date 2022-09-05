@@ -17,7 +17,7 @@ from torch import nn, Tensor
 from torch.nn.init import xavier_uniform_, constant_, uniform_, normal_
 
 from util.misc import inverse_sigmoid
-from models.ops.modules import MSDeformAttn
+from models.ops.modules import MSDeformAttnShift#MSDeformAttn,
 
 
 class DeformableTransformer(nn.Module):
@@ -60,7 +60,7 @@ class DeformableTransformer(nn.Module):
             if p.dim() > 1:
                 nn.init.xavier_uniform_(p)
         for m in self.modules():
-            if isinstance(m, MSDeformAttn):
+            if isinstance(m, MSDeformAttnShift):
                 m._reset_parameters()
         if not self.two_stage:
             xavier_uniform_(self.reference_points.weight.data, gain=1.0)
@@ -125,7 +125,25 @@ class DeformableTransformer(nn.Module):
 
     def forward(self, srcs, masks, pos_embeds, query_embed=None):
         assert self.two_stage or query_embed is not None
+        # 4 srcs[0].shape torch.Size([4, 256, 76, 106])
+        #print("len(srcs)",len(srcs))
+        #print("srcs[0].shape",srcs[0].shape)
+        #print("srcs[1].shape",srcs[1].shape)#torch.Size([4, 256, 38, 53])
+        #print("srcs[2].shape",srcs[2].shape)
+        #print("srcs[3].shape",srcs[3].shape)#torch.Size([4, 256, 10, 14])
+    
+        #print("masks.shape",masks[0].shape)
+        #print("masks.shape",masks[1].shape)
+        #print("masks.shape",masks[2].shape)
+        #print("masks.shape",masks[3].shape)
 
+        #print("pos_embeds.shape",pos_embeds[0].shape)
+        #print("pos_embeds.shape",pos_embeds[1].shape)
+        #print("pos_embeds.shape",pos_embeds[2].shape)
+        #print("pos_embeds.shape",pos_embeds[3].shape)
+
+        #print("query_embed.shape",query_embed.shape) #query_embed.shape torch.Size([300, 512])
+        
         # prepare input for encoder
         src_flatten = []
         mask_flatten = []
@@ -135,10 +153,13 @@ class DeformableTransformer(nn.Module):
             bs, c, h, w = src.shape
             spatial_shape = (h, w)
             spatial_shapes.append(spatial_shape)
-            src = src.flatten(2).transpose(1, 2)
-            mask = mask.flatten(1)
-            pos_embed = pos_embed.flatten(2).transpose(1, 2)
-            lvl_pos_embed = pos_embed + self.level_embed[lvl].view(1, 1, -1)
+            src = src.flatten(2).transpose(1, 2) #[4,76*106,256]
+            mask = mask.flatten(1) #[4,256,76*106]
+            pos_embed = pos_embed.flatten(2).transpose(1, 2) #[4,76*106,256]
+            #print("pos_embed.shape",pos_embed.shape)
+            #print("self.level_embed[lvl].shape",self.level_embed[lvl].shape) torch.Size([256])
+            #print('self.level_embed[lvl].view(1, 1, -1).shapee',self.level_embed[lvl].view(1, 1, -1).shape)
+            lvl_pos_embed = pos_embed + self.level_embed[lvl].view(1, 1, -1) #torch.Size([1, 1, 256])
             lvl_pos_embed_flatten.append(lvl_pos_embed)
             src_flatten.append(src)
             mask_flatten.append(mask)
@@ -146,14 +167,61 @@ class DeformableTransformer(nn.Module):
         mask_flatten = torch.cat(mask_flatten, 1)
         lvl_pos_embed_flatten = torch.cat(lvl_pos_embed_flatten, 1)
         spatial_shapes = torch.as_tensor(spatial_shapes, dtype=torch.long, device=src_flatten.device)
+        #spatial_shape storch.Size([1, 2])
         level_start_index = torch.cat((spatial_shapes.new_zeros((1, )), spatial_shapes.prod(1).cumsum(0)[:-1]))
+
+        #print('level_start_index.shape',level_start_index) #[]
+        """
+        if 
+        pos_embed.shape torch.Size([4, 22620, 256])
+        pos_embed.shape torch.Size([4, 5694, 256])
+        pos_embed.shape torch.Size([4, 1443, 256])
+        pos_embed.shape torch.Size([4, 380, 256])
+        
+        then:
+        level_start_index.shape tensor([    0, 22620, 28314, 29757]
+        """
         valid_ratios = torch.stack([self.get_valid_ratio(m) for m in masks], 1)
+        #print("valid_ratios.shape",valid_ratios.shape) #valid_ratios.shape torch.Size([4, 4, 2])
+        """
+        valid_ratios tensor([[[0.8113, 0.8421],
+         [0.8113, 0.8421],
+         [0.8148, 0.8421],
+         [0.8571, 0.9000]],
 
+        [[1.0000, 1.0000],
+         [1.0000, 1.0000],
+         [1.0000, 1.0000],
+         [1.0000, 1.0000]],
+
+        [[0.5755, 0.8816],
+         [0.5849, 0.8947],
+         [0.5926, 0.8947],
+         [0.5714, 0.9000]],
+
+        [[0.6226, 0.8421],
+         [0.6226, 0.8421],
+         [0.6296, 0.8421],
+         [0.6429, 0.9000]]], device='cuda:0')
+        """
+
+        #print("src_flatten.shape",src_flatten.shape)
         # encoder
+        #print("spatial_shapes.shape",spatial_shapes.shape) #torch.Size([1, 2])
         memory = self.encoder(src_flatten, spatial_shapes, level_start_index, valid_ratios, lvl_pos_embed_flatten, mask_flatten)
-
+        #memory,enc_sampling_locs = self.encoder(src_flatten, spatial_shapes, level_start_index, valid_ratios, lvl_pos_embed_flatten, mask_flatten)
+        #print("memory.shape",memory.shape)
+        #memory.shape torch.Size([8, 900, 256])
+        #print("len(enc_sampling_locs)",len(enc_sampling_locs))
+        #reference_points.shape torch.Size([8, 300, 1, 2])
+        #print("enc_sampling_locs.shape",enc_sampling_locs[0].shape)
+        #enc_sampling_locs.shape torch.Size([8, 900, 8, 1, 4, 2])
+        #nc_sampling_locs.shape torch.Size([8, 1406, 8, 1, 4, 2])
+        #第二个数字是会变的
         # prepare input for decoder
         bs, _, c = memory.shape
+        #memory.shape torch.Size([4, 10723, 256])
+        #print("memory.shape",memory.shape)
         if self.two_stage:
             output_memory, output_proposals = self.gen_encoder_output_proposals(memory, mask_flatten, spatial_shapes)
 
@@ -179,7 +247,8 @@ class DeformableTransformer(nn.Module):
         # decoder
         hs, inter_references = self.decoder(tgt, reference_points, memory,
                                             spatial_shapes, level_start_index, valid_ratios, query_embed, mask_flatten)
-
+        #print("hs",hs.shape) #hs torch.Size([6, 8, 300, 256])
+        #print("inter_references",inter_references.shape) #torch.Size([6, 8, 300, 2])
         inter_references_out = inter_references
         if self.two_stage:
             return hs, init_reference_out, inter_references_out, enc_outputs_class, enc_outputs_coord_unact
@@ -194,7 +263,7 @@ class DeformableTransformerEncoderLayer(nn.Module):
         super().__init__()
 
         # self attention
-        self.self_attn = MSDeformAttn(d_model, n_levels, n_heads, n_points)
+        self.self_attn = MSDeformAttnShift(d_model, n_levels, n_heads, n_points,return_shift=False)
         self.dropout1 = nn.Dropout(dropout)
         self.norm1 = nn.LayerNorm(d_model)
 
@@ -218,7 +287,9 @@ class DeformableTransformerEncoderLayer(nn.Module):
 
     def forward(self, src, pos, reference_points, spatial_shapes, level_start_index, padding_mask=None):
         # self attention
+        #src2 = self.self_attn(self.with_pos_embed(src, pos), reference_points, src, spatial_shapes, level_start_index, padding_mask)
         src2 = self.self_attn(self.with_pos_embed(src, pos), reference_points, src, spatial_shapes, level_start_index, padding_mask)
+
         src = src + self.dropout1(src2)
         src = self.norm1(src)
 
@@ -250,11 +321,15 @@ class DeformableTransformerEncoder(nn.Module):
         return reference_points
 
     def forward(self, src, spatial_shapes, level_start_index, valid_ratios, pos=None, padding_mask=None):
+        #enc_sampling_loc=[]
         output = src
         reference_points = self.get_reference_points(spatial_shapes, valid_ratios, device=src.device)
         for _, layer in enumerate(self.layers):
+            #output = layer(output, pos, reference_points, spatial_shapes, level_start_index, padding_mask)
             output = layer(output, pos, reference_points, spatial_shapes, level_start_index, padding_mask)
 
+            #enc_sampling_loc.append(sampling_loc)
+        #return output,enc_sampling_loc
         return output
 
 
@@ -265,7 +340,7 @@ class DeformableTransformerDecoderLayer(nn.Module):
         super().__init__()
 
         # cross attention
-        self.cross_attn = MSDeformAttn(d_model, n_levels, n_heads, n_points)
+        self.cross_attn = MSDeformAttnShift(d_model, n_levels, n_heads, n_points,return_shift=False)
         self.dropout1 = nn.Dropout(dropout)
         self.norm1 = nn.LayerNorm(d_model)
 
@@ -295,20 +370,31 @@ class DeformableTransformerDecoderLayer(nn.Module):
     def forward(self, tgt, query_pos, reference_points, src, src_spatial_shapes, level_start_index, src_padding_mask=None):
         # self attention
         q = k = self.with_pos_embed(tgt, query_pos)
+        ##self mark shift
+        #tgt2 = self.self_attn(q.transpose(0, 1), k.transpose(0, 1), tgt.transpose(0, 1))[0].transpose(0, 1)
         tgt2 = self.self_attn(q.transpose(0, 1), k.transpose(0, 1), tgt.transpose(0, 1))[0].transpose(0, 1)
         tgt = tgt + self.dropout2(tgt2)
         tgt = self.norm2(tgt)
 
         # cross attention
+        #tgt2,sampling_loc,sampling_grid_l_ = self.cross_attn(self.with_pos_embed(tgt, query_pos),
+        #                       reference_points,
+        #                       src, src_spatial_shapes, level_start_index, src_padding_mask)
         tgt2 = self.cross_attn(self.with_pos_embed(tgt, query_pos),
                                reference_points,
                                src, src_spatial_shapes, level_start_index, src_padding_mask)
+        
+        
+        #print("sampling_loc.shape",sampling_loc.shape) #[8, 300, 8, 1, 4, 2])
+        #print("sampling_grid_l_.shape",sampling_grid_l_.shape) #[64, 300, 4, 2])
+        
         tgt = tgt + self.dropout1(tgt2)
         tgt = self.norm1(tgt)
 
         # ffn
         tgt = self.forward_ffn(tgt)
 
+        #return tgt,sampling_loc,sampling_grid_l_
         return tgt
 
 
@@ -324,10 +410,18 @@ class DeformableTransformerDecoder(nn.Module):
 
     def forward(self, tgt, reference_points, src, src_spatial_shapes, src_level_start_index, src_valid_ratios,
                 query_pos=None, src_padding_mask=None):
+        dec_sampling_loc=[]
         output = tgt
-
+        sampling_grid_l_list=[]
         intermediate = []
         intermediate_reference_points = []
+        #len(src_spatial_shapes) 4
+        #print("len(src_spatial_shapes)",len(src_spatial_shapes))
+        #print('src_spatial_shapes',src_spatial_shapes)
+        #tensor([[ 91, 108],
+        #[ 46,  54],
+        #[ 23,  27],
+        #[ 12,  14]], device='cuda:0') 
         for lid, layer in enumerate(self.layers):
             if reference_points.shape[-1] == 4:
                 reference_points_input = reference_points[:, :, None] \
@@ -335,8 +429,12 @@ class DeformableTransformerDecoder(nn.Module):
             else:
                 assert reference_points.shape[-1] == 2
                 reference_points_input = reference_points[:, :, None] * src_valid_ratios[:, None]
+            
             output = layer(output, query_pos, reference_points_input, src, src_spatial_shapes, src_level_start_index, src_padding_mask)
-
+            #output,sampling_loc,sampling_grid_l_= layer(output, query_pos, reference_points_input, src, src_spatial_shapes, src_level_start_index, src_padding_mask)
+            
+            #dec_sampling_loc.append(sampling_loc)
+            #sampling_grid_l_list.append(sampling_grid_l_)
             # hack implementation for iterative bounding box refinement
             if self.bbox_embed is not None:
                 tmp = self.bbox_embed[lid](output)
@@ -353,11 +451,15 @@ class DeformableTransformerDecoder(nn.Module):
             if self.return_intermediate:
                 intermediate.append(output)
                 intermediate_reference_points.append(reference_points)
-
+        #dec_sampling_loc torch.Size([8, 300, 8, 1, 4, 2])
+        #print("len(dec_sampling_loc)",len(dec_sampling_loc))
+        #print("dec_sampling_loc",dec_sampling_loc[0].shape)
+        #print("len(sampling_grid_l_list)",len(sampling_grid_l_list))
+        #print("sampling_grid_l_list[0]",sampling_grid_l_list[0].shape)
         if self.return_intermediate:
             return torch.stack(intermediate), torch.stack(intermediate_reference_points)
 
-        return output, reference_points
+        return output#,reference_points,dec_sampling_loc
 
 
 def _get_clones(module, N):

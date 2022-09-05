@@ -6,5 +6,5 @@
 # Modified from https://github.com/chengdazhi/Deformable-Convolution-V2-PyTorch/tree/pytorch_1.0.0
 # ------------------------------------------------------------------------------------------------
 
-from .ms_deform_attn_func import MSDeformAttnFunction
-
+#from .ms_deform_attn_func import MSDeformAttnFunction#,return_sampling_grid_l__core_pytorch
+from .ms_deform_attn_func_chenhui import return_sampling_grid_l__core_pytorch

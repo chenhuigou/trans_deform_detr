@@ -28,12 +28,13 @@ from models import build_model
 
 def get_args_parser():
     parser = argparse.ArgumentParser('Deformable DETR Detector', add_help=False)
-    parser.add_argument('--lr', default=2e-4, type=float)
+    parser.add_argument('--lr', default=2e-4*2, type=float)
     parser.add_argument('--lr_backbone_names', default=["backbone.0"], type=str, nargs='+')
-    parser.add_argument('--lr_backbone', default=2e-5, type=float)
+    parser.add_argument('--lr_backbone', default=2e-5*2 , type=float)
     parser.add_argument('--lr_linear_proj_names', default=['reference_points', 'sampling_offsets'], type=str, nargs='+')
     parser.add_argument('--lr_linear_proj_mult', default=0.1, type=float)
-    parser.add_argument('--batch_size', default=2, type=int)
+    #parser.add_argument('--batch_size', default=1, type=int)
+    parser.add_argument('--batch_size', default=4, type=int)
     parser.add_argument('--weight_decay', default=1e-4, type=float)
     parser.add_argument('--epochs', default=50, type=int)
     parser.add_argument('--lr_drop', default=40, type=int)
@@ -96,6 +97,7 @@ def get_args_parser():
                         help="L1 box coefficient in the matching cost")
     parser.add_argument('--set_cost_giou', default=2, type=float,
                         help="giou box coefficient in the matching cost")
+    
 
     # * Loss coefficients
     parser.add_argument('--mask_loss_coef', default=1, type=float)
@@ -104,14 +106,16 @@ def get_args_parser():
     parser.add_argument('--bbox_loss_coef', default=5, type=float)
     parser.add_argument('--giou_loss_coef', default=2, type=float)
     parser.add_argument('--focal_alpha', default=0.25, type=float)
+    parser.add_argument('--transform_invarint_loss_coef', default=0.1, type=float)
 
-    # dataset parameters
+    # dataset parameterstransform_invarint_loss_coef
     parser.add_argument('--dataset_file', default='coco')
-    parser.add_argument('--coco_path', default='./data/coco', type=str)
+    #parser.add_argument('--coco_path', default='./data/coco', type=str)
+    parser.add_argument('--coco_path', default='../Deformable-DETR_box_shift/data/coco', type=str)
     parser.add_argument('--coco_panoptic_path', type=str)
     parser.add_argument('--remove_difficult', action='store_true')
 
-    parser.add_argument('--output_dir', default='',
+    parser.add_argument('--output_dir', default='logs/4_deform',
                         help='path where to save, empty for no saving')
     parser.add_argument('--device', default='cuda',
                         help='device to use for training / testing')
@@ -319,6 +323,7 @@ def main(args):
 
 
 if __name__ == '__main__':
+    print("???????????????????????")
     parser = argparse.ArgumentParser('Deformable DETR training and evaluation script', parents=[get_args_parser()])
     args = parser.parse_args()
     if args.output_dir:

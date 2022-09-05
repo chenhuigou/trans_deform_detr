@@ -22,12 +22,25 @@ CPUS_PER_TASK=${CPUS_PER_TASK:-4}
 SRUN_ARGS=${SRUN_ARGS:-""}
 
 srun -p ${PARTITION} \
+    -A puzzle\
+    --mem=100G \
     --job-name=${JOB_NAME} \
-    --gres=gpu:${GPUS_PER_NODE} \
+    --gres=gpu:a100:4 \
     --ntasks=${GPUS} \
     --ntasks-per-node=${GPUS_PER_NODE} \
-    --cpus-per-task=${CPUS_PER_TASK} \
+    --cpus-per-task=4 \
+    -o logs/2_deform4.out \
     --kill-on-bad-exit=1 \
     ${SRUN_ARGS} \
     ${RUN_COMMAND}
-
+#srun -p tier3 \
+#    --job-name=2_deform_4\
+#    -A puzzle \
+#    -o logs/2_deform4.out \
+#    
+#    --gres=gpu:a100:4\
+#    --ntasks=8 \
+#    --ntasks-per-node=4 \
+#    --cpus-per-task=4 \
+#    bash configs/r50_deformable_detr.sh
+    

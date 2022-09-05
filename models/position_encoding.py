@@ -38,8 +38,15 @@ class PositionEmbeddingSine(nn.Module):
         mask = tensor_list.mask
         assert mask is not None
         not_mask = ~mask
+        #print("mask",mask)
+        #print("mask",not_mask)
+        #print("mask.shape",mask.shape)
         y_embed = not_mask.cumsum(1, dtype=torch.float32)
         x_embed = not_mask.cumsum(2, dtype=torch.float32)
+        #print("y_embed.shape",y_embed.shape)
+        #print("x_embed.shape",x_embed.shape)
+        #print("y_embed",y_embed)
+        #print("x_embed",x_embed)
         if self.normalize:
             eps = 1e-6
             y_embed = (y_embed - 0.5) / (y_embed[:, -1:, :] + eps) * self.scale

@@ -1,0 +1,4 @@
+# ninja log v5
+0	6444	1660542707694540287	/home/dxleec/chenhui/Deformable-DETR/models/ops/build/temp.linux-x86_64-3.7/home/dxleec/chenhui/Deformable-DETR/models/ops/src/cpu/ms_deform_attn_cpu.o	1eb4cbfed8f0cfe
+0	14991	1660542716238595513	/home/dxleec/chenhui/Deformable-DETR/models/ops/build/temp.linux-x86_64-3.7/home/dxleec/chenhui/Deformable-DETR/models/ops/src/cuda/ms_deform_attn_cuda.o	ea7662be7efb572c
+4	26065	1660542727310667080	/home/dxleec/chenhui/Deformable-DETR/models/ops/build/temp.linux-x86_64-3.7/home/dxleec/chenhui/Deformable-DETR/models/ops/src/vision.o	65f77e88c323b5ba

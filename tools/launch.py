@@ -165,6 +165,7 @@ def main():
     # set PyTorch distributed related environmental variables
     current_env = os.environ.copy()
     current_env["MASTER_ADDR"] = args.master_addr
+    print('current_env["MASTER_ADDR"]',current_env["MASTER_ADDR"])
     current_env["MASTER_PORT"] = str(args.master_port)
     current_env["WORLD_SIZE"] = str(dist_world_size)
 

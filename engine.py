@@ -16,12 +16,13 @@ import sys
 from typing import Iterable
 
 import torch
+
 import util.misc as utils
 from datasets.coco_eval import CocoEvaluator
 from datasets.panoptic_eval import PanopticEvaluator
 from datasets.data_prefetcher import data_prefetcher
 
-
+from util.customerd_transforms import transformed
 def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
                     data_loader: Iterable, optimizer: torch.optim.Optimizer,
                     device: torch.device, epoch: int, max_norm: float = 0):
@@ -36,12 +37,31 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
 
     prefetcher = data_prefetcher(data_loader, device, prefetch=True)
     samples, targets = prefetcher.next()
+    
+    #original_trans_cof=weight_dict['transform_invarint']
+    #print("samples.shape",samples.tensors.shape)
+    #print("samples.mask.shape",samples.mask.shape)
+    #print("len(targets)",len(targets))
+    #print("targets[0]",targets[0])
 
+    rotated_image_mask_tensor,rotation_matrix,original_sizes=transformed(samples,device)
+    
+    #print("rotation_matrix.shape",rotation_matrix.shape)
     # for samples, targets in metric_logger.log_every(data_loader, print_freq, header):
     for _ in metric_logger.log_every(range(len(data_loader)), print_freq, header):
-        outputs = model(samples)
-        loss_dict = criterion(outputs, targets)
+
+        outputs,sampling_grid_l_list_list,factor_list_list= model(samples)
+        _,sampling_grid_l_list_list_rotated,factor_list_list_rotated=model(rotated_image_mask_tensor)
+        
+        
+        #print("transformed_output",transformed_output)
+        #outputs, sampling_locations,trans
+        
+        loss_dict = criterion(outputs, targets,sampling_grid_l_list_list,factor_list_list,sampling_grid_l_list_list_rotated,factor_list_list_rotated,original_sizes,rotation_matrix)
+
         weight_dict = criterion.weight_dict
+        if epoch<20:
+           loss_dict['transform_invarint']=torch.zeros(loss_dict['transform_invarint'].shape).type(loss_dict['transform_invarint'].dtype).to(loss_dict['transform_invarint'].device)
         losses = sum(loss_dict[k] * weight_dict[k] for k in loss_dict.keys() if k in weight_dict)
 
         # reduce losses over all GPUs for logging purposes
@@ -73,6 +93,7 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
         metric_logger.update(grad_norm=grad_total_norm)
 
         samples, targets = prefetcher.next()
+        #break
     # gather the stats from all processes
     metric_logger.synchronize_between_processes()
     print("Averaged stats:", metric_logger)
@@ -81,6 +102,7 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
 
 @torch.no_grad()
 def evaluate(model, criterion, postprocessors, data_loader, base_ds, device, output_dir):
+    #print("testing")
     model.eval()
     criterion.eval()
 
@@ -103,11 +125,13 @@ def evaluate(model, criterion, postprocessors, data_loader, base_ds, device, out
     for samples, targets in metric_logger.log_every(data_loader, 10, header):
         samples = samples.to(device)
         targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
-
-        outputs = model(samples)
+        outputs,_,_=model(samples)
+        #outputs = model(samples)
+        
         loss_dict = criterion(outputs, targets)
         weight_dict = criterion.weight_dict
-
+        #print("weight_dict",weight_dict.keys())
+        #weight_dict.pop('transform_invarint')
         # reduce losses over all GPUs for logging purposes
         loss_dict_reduced = utils.reduce_dict(loss_dict)
         loss_dict_reduced_scaled = {k: v * weight_dict[k]
